@@ -1,0 +1,61 @@
+Constant Story "The Exciting Adventure";
+Constant Headline "by Sam Peterson";
+
+! vim:tw=72:expandtab:sw=2:ai
+
+Release 1;
+
+Include "Parser";
+Include "VerbLib";
+
+Class Room
+  has light;
+
+Room SunnyMeadow "Sunny Meadow"
+  with description "You find yourself in a sunny meadow.^^There is an exit to the north.",
+  n_to FrontOfCave;
+
+Room FrontOfCave "Front of the Cave"
+  with description "You stand before a dim cave. It looks quite dark
+  inside.^^To the south is the meadow.",
+  s_to SunnyMeadow;
+
+Object DoorToCave "door to cave" FrontOfCave
+  with name 'cave',
+       door_to Cave1,
+       door_dir n_to,
+  has door static scenery;
+
+Object Torch "torch" FrontOfCave
+  with name 'torch',
+  description "This seems like a well made torch that should burn for a
+  while.",
+  when_on [; give self light;],
+  when_off [; give self ~light;],
+  before [; Burn: give self on; "The torch burns brightly";],
+  has ;
+
+Room Cave1
+  with description "You're in a small cavern near the entrance. It is quite dark
+  further in.^^You can proceed north.",
+  n_to Cave2;
+
+Object DoorFromCave "door to cave" Cave1
+  with name 'cave',
+       door_to FrontOfCave,
+       door_dir s_to,
+    has door static scenery;
+
+Room Cave2
+  with description "You're about 50m into the cave. You hear running water up
+  ahead.",
+  s_to Cave1,
+  has ~light;
+
+
+
+[Initialise;
+ location = SunnyMeadow;
+];
+
+Include "Grammar";

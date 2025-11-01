@@ -2,13 +2,17 @@
 
 # type: ignore
 from adventurelib import * 
+from functools import wraps
 
-
+Item.__getattr__ = lambda self, item: None
 class InvRoom(Room):
     """Room type which gives rooms inventories"""
     def __init__(self, description: str):
         super().__init__(description)
         self.things = Bag()
+
+    def __getattr__(self, item):
+        return None
 
 
 class Readable(Item):
@@ -101,14 +105,23 @@ def current_room(new_room=None):
     return CR
 
 
-@when('north', direction='north')
-@when('south', direction='south')
-@when('east', direction='east')
-@when('west', direction='west')
-@when('n', direction='north')
-@when('s', direction='south')
-@when('e', direction='east')
-@when('w', direction='west')
+def directions(method):
+    @when('north', direction='north')
+    @when('south', direction='south')
+    @when('east', direction='east')
+    @when('west', direction='west')
+    @when('n', direction='north')
+    @when('s', direction='south')
+    @when('e', direction='east')
+    @when('w', direction='west')
+    @wraps(method)
+    def return_method(*args, **kwargs):
+        return method(*args, **kwargs)
+    
+    return return_method
+
+
+@directions
 def move(direction):
     """Provide directional commands."""
     new_room = current_room().exit(direction)
@@ -119,6 +132,8 @@ def move(direction):
         say("You see no exit in that direction.")
 
 
+@when("examine THING")
+@when("x THING")
 @when("look THING")
 @when("l THING")
 @when("look", thing=None)
@@ -136,7 +151,7 @@ def look(thing=None):
 
     # if attribute on room matching thing is found
     # read that
-    obj = hasattr(cr, thing) and getattr(cr, thing)
+    obj = getattr(cr, thing)
     if obj:
         say(obj)
         return
@@ -145,7 +160,7 @@ def look(thing=None):
     # read the description of the item found
     obj = cr.things.find(thing) 
     if obj:
-        if hasattr(obj, 'description'):
+        if obj.description:
             say(obj.description)
         else:
             say(f"You see nothing special. It's just {obj.name}")
@@ -158,11 +173,10 @@ def look(thing=None):
 def take(thing):
     cr = current_room()
     obj = cr.things.take(thing)
-    if hasattr(obj, 'fixed') and obj.fixed:
+    if obj.fixed:
         say("You can't pick that up")
-        return
-    if obj:
-        say(f"You take {obj.name}") # type: ignore
+    elif obj:
+        say(f"You take {obj.name}")
         INV.add(obj)
     else:
         say(f"You see no '{thing}' here.")
@@ -181,7 +195,7 @@ def drop(thing):
 @when("read THING")
 def read_thing(thing):
     obj = INV.find(thing) or current_room().things.find(thing)
-    if obj and hasattr(obj, 'read'):
+    if obj.read:
         obj.read()
     else:
         say("That isn't readable.")
@@ -201,6 +215,11 @@ def show_inventory():
 @when("say PHRASE")
 def say_hello(phrase):
     say(f"You bellow the words '{phrase}!' ")
+
+
+@when("fart")
+def fart():
+    say("You rip an ear-splitting fart, flapping your cheeks in the wind.")
 
 
 @when("help")

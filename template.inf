@@ -1,0 +1,14 @@
+Constant Story "Your Story";
+Constant Headline "This is a subtitle for the story.";
+
+Release 1;
+
+Include "Parser";
+Include "VerbLib";
+
+
+[Initialise;
+ location = FirstRoom;
+];
+
+Include "Grammar";
